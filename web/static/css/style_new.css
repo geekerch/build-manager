@@ -398,7 +398,7 @@ body {
 
 /* ===== 構建配置表單 ===== */
 .build-config-container {
-    max-width: 600px;
+    width: 100%; /* 使用完整寬度 */
     height: 100%;
     overflow-y: auto;
 }
