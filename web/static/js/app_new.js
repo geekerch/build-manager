@@ -28,6 +28,9 @@ function initializeUI() {
     
     // Connect WebSocket
     connectWebSocket();
+    
+    // Initialize CSS variables for dynamic height
+    updateContentHeight();
 }
 
 // Load available git configurations
@@ -387,10 +390,15 @@ function toggleBottomPanel() {
     if (bottomPanelCollapsed) {
         layout.classList.add('bottom-collapsed');
         icon.className = 'fas fa-chevron-up';
+        bottomPanelHeight = 40; // 收合時的高度
     } else {
         layout.classList.remove('bottom-collapsed');
         icon.className = 'fas fa-chevron-down';
+        bottomPanelHeight = 200; // 展開時的預設高度
     }
+    
+    // 更新內容區域高度
+    updateContentHeight();
 }
 
 // Clear logs
@@ -441,12 +449,16 @@ function initBottomPanelResize(e) {
         if (newHeight >= 100 && newHeight <= 400) {
             bottomPanelHeight = newHeight;
             document.querySelector('.app-layout').style.gridTemplateRows = `60px 1fr ${newHeight}px`;
+            // 更新內容區域高度
+            updateContentHeight();
         }
     }
     
     function stopResize() {
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
+        // 最終更新一次高度
+        updateContentHeight();
     }
     
     document.addEventListener('mousemove', doResize);
@@ -537,6 +549,12 @@ function updateBuildStatus(statusData) {
         updateBuildUI(false);
         addLogMessage('❌ 構建失敗！', 'error');
     }
+}
+
+// Update content height based on bottom panel state
+function updateContentHeight() {
+    const root = document.documentElement;
+    root.style.setProperty('--bottom-panel-height', `${bottomPanelHeight}px`);
 }
 
 // Add log message

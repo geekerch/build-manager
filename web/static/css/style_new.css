@@ -361,7 +361,8 @@ body {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    max-height: calc(100vh - 200px); /* 確保有最大高度限制 */
+    /* 動態計算高度，考慮頂部標題(60px) + 分頁導航(約60px) + 底部面板高度 + 邊距 */
+    max-height: calc(100vh - 60px - 60px - var(--bottom-panel-height, 200px) - 40px);
 }
 
 /* ===== 內容容器樣式 ===== */
@@ -390,7 +391,8 @@ body {
     overflow: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
-    max-height: 400px; /* 限制最大高度 */
+    /* 動態高度，根據底部面板調整 */
+    max-height: calc(100vh - 60px - 60px - var(--bottom-panel-height, 200px) - 140px);
     min-height: 200px; /* 設定最小高度 */
 }
 
@@ -406,7 +408,8 @@ body {
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 24px;
-    max-height: 500px;
+    /* 動態高度，根據底部面板調整 */
+    max-height: calc(100vh - 60px - 60px - var(--bottom-panel-height, 200px) - 140px);
     overflow-y: auto;
 }
 
