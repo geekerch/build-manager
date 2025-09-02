@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Tool</title>
+    <link href="/static/css/style_new.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1><i class="fas fa-rocket"></i> Build Tool</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-outline" onclick="handleRefresh()">
+                    <i class="fas fa-sync-alt"></i> 刷新
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-code-branch"></i> 專案選擇</h3>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Git Configuration Selection -->
+                <div class="sidebar-section">
+                    <label class="sidebar-label">
+                        <i class="fas fa-git-alt"></i> Git 配置
+                    </label>
+                    <select id="gitConfigSelect" class="sidebar-select" onchange="onGitConfigChange()">
+                        <option value="">請選擇 Git 配置...</option>
+                    </select>
+                </div>
+
+                <!-- Branch Selection -->
+                <div class="sidebar-section">
+                    <label class="sidebar-label">
+                        <i class="fas fa-code-branch"></i> 分支列表
+                    </label>
+                    <div class="branch-list" id="branchList">
+                        <div class="branch-placeholder">請先選擇 Git 配置</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Resize Handle -->
+            <div class="sidebar-resize-handle" onmousedown="initSidebarResize(event)"></div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Tab Navigation -->
+                <div class="tab-nav" id="tabNav" style="display: none;">
+                    <button class="tab-btn active" onclick="switchTab('release-notes')">
+                        <i class="fas fa-file-alt"></i> Release Notes
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('version-info')">
+                        <i class="fas fa-tags"></i> 版本資訊
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('config-info')">
+                        <i class="fas fa-cog"></i> 配置資訊
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('build-config')">
+                        <i class="fas fa-hammer"></i> 構建配置
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content-area">
+                    <!-- Placeholder -->
+                    <div class="content-placeholder" id="contentPlaceholder">
+                        <div class="placeholder-icon">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <h3>請選擇分支</h3>
+                        <p>從左側選單選擇 Git 配置和分支以開始</p>
+                    </div>
+
+                    <!-- Release Notes Tab -->
+                    <div class="tab-content active" id="release-notes-content" style="display: none;">
+                        <div class="content-header">
+                            <h2><i class="fas fa-file-alt"></i> Release Notes</h2>
+                        </div>
+                        <div class="content-body">
+                            <div class="release-notes-container">
+                                <pre id="releaseNotes" class="release-notes-text">載入中...</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version Info Tab -->
+                    <div class="tab-content" id="version-info-content" style="display: none;">
+                        <div class="content-header">
+                            <h2><i class="fas fa-tags"></i> 版本資訊</h2>
+                        </div>
+                        <div class="content-body">
+                            <div class="version-info-container">
+                                <pre id="versionInfo" class="version-info-text">載入中...</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Config Info Tab -->
+                    <div class="tab-content" id="config-info-content" style="display: none;">
+                        <div class="content-header">
+                            <h2><i class="fas fa-cog"></i> 配置資訊</h2>
+                        </div>
+                        <div class="content-body">
+                            <div class="config-info-container">
+                                <pre id="configInfo" class="config-info-text">載入中...</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Build Config Tab -->
+                    <div class="tab-content" id="build-config-content" style="display: none;">
+                        <div class="content-header">
+                            <h2><i class="fas fa-hammer"></i> 構建配置</h2>
+                        </div>
+                        <div class="content-body">
+                            <div class="build-config-container">
+                                <div class="build-form">
+                                    <div class="form-group">
+                                        <label><i class="fas fa-code-branch"></i> 選擇的分支</label>
+                                        <input type="text" id="selectedBranch" class="form-input" readonly>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label><i class="fas fa-tasks"></i> 構建選項</label>
+                                        <div class="checkbox-grid">
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="pullRepos" checked>
+                                                <span class="checkbox-label">
+                                                    <i class="fas fa-download"></i> 拉取配置倉庫
+                                                </span>
+                                            </label>
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="buildImages" checked>
+                                                <span class="checkbox-label">
+                                                    <i class="fas fa-hammer"></i> 執行構建腳本
+                                                </span>
+                                            </label>
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="pushHarbor" checked>
+                                                <span class="checkbox-label">
+                                                    <i class="fas fa-cloud-upload-alt"></i> 推送到 Harbor
+                                                </span>
+                                            </label>
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="deploy">
+                                                <span class="checkbox-label">
+                                                    <i class="fas fa-rocket"></i> 執行部署
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <div class="button-group">
+                                            <button class="btn btn-success" id="startBuild" disabled>
+                                                <i class="fas fa-play"></i> 開始構建
+                                            </button>
+                                            <button class="btn btn-warning" id="stopBuild" disabled>
+                                                <i class="fas fa-stop"></i> 停止構建
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="progressFill"></div>
+                                        </div>
+                                        <div class="progress-text" id="progressText">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Panel (Build Logs) -->
+        <div class="bottom-panel" id="bottomPanel">
+            <div class="bottom-panel-header">
+                <div class="bottom-panel-title">
+                    <i class="fas fa-terminal"></i> 構建日誌
+                </div>
+                <div class="bottom-panel-controls">
+                    <button class="panel-btn" onclick="clearLogs()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="panel-btn" onclick="toggleBottomPanel()">
+                        <i class="fas fa-chevron-down" id="bottomPanelToggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="bottom-panel-content">
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry log-info">
+                        <span class="log-time">[系統]</span> 等待選擇配置和分支...
+                    </div>
+                </div>
+            </div>
+            <!-- Bottom Panel Resize Handle -->
+            <div class="bottom-panel-resize-handle" onmousedown="initBottomPanelResize(event)"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app_new.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "server": {
+    "port": "8080",
+    "read_timeout": 15,
+    "write_timeout": 15
+  },
+  "git_configs": {
+    "eventcenter": {
+      "url": "https://gitlab.wise-paas.com/WISE-PaaS-4.0-Ops/event-center-v2/rr-released.git",
+      "token": "",
+      "description": "Event Center 發布配置倉庫"
+    },
+    "demo": {
+      "url": "https://github.com/octocat/Hello-World.git",
+      "token": "",
+      "description": "Demo 構建配置倉庫"
+    }
+  }
+}
