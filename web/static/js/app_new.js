@@ -147,12 +147,18 @@ async function loadBranchInfo(gitConfig, branch) {
             const notesResponse = await fetch(`/api/release-notes/${gitConfig}/${branch}`);
             if (notesResponse.ok) {
                 const notesData = await notesResponse.json();
-                document.getElementById('releaseNotes').textContent = notesData.notes || '沒有發布說明';
+                const notesText = notesData.notes || '沒有發布說明';
+                document.getElementById('releaseNotes').textContent = notesText;
+                addLogMessage(`Release Notes 載入成功: ${notesText.length} 字元`, 'success');
             } else {
-                document.getElementById('releaseNotes').textContent = `載入發布說明失敗 (${notesResponse.status})`;
+                const errorMsg = `載入發布說明失敗 (${notesResponse.status})`;
+                document.getElementById('releaseNotes').textContent = errorMsg;
+                addLogMessage(errorMsg, 'error');
             }
         } catch (error) {
-            document.getElementById('releaseNotes').textContent = '載入發布說明時發生錯誤';
+            const errorMsg = '載入發布說明時發生錯誤: ' + error.message;
+            document.getElementById('releaseNotes').textContent = errorMsg;
+            addLogMessage(errorMsg, 'error');
         }
         
         // Load version information
@@ -161,26 +167,41 @@ async function loadBranchInfo(gitConfig, branch) {
             if (versionsResponse.ok) {
                 const versionsData = await versionsResponse.json();
                 let versionText = '';
+                
+                // 版本資訊
+                if (versionsData.version_info) {
+                    versionText += `📋 發布資訊:\n`;
+                    versionText += `  Release Date: ${versionsData.version_info.release_date || 'N/A'}\n`;
+                    versionText += `  Release Type: ${versionsData.version_info.release_type || 'N/A'}\n`;
+                    versionText += `  Description: ${versionsData.version_info.description || 'N/A'}\n\n`;
+                }
+                
+                // Docker 標籤
+                if (versionsData.docker && versionsData.docker.tag) {
+                    versionText += `🐳 Docker 資訊:\n`;
+                    versionText += `  Tag: ${versionsData.docker.tag}\n\n`;
+                }
+                
+                // 模組版本
                 if (versionsData.modules) {
+                    versionText += `📦 模組版本:\n`;
                     for (const [key, value] of Object.entries(versionsData.modules)) {
-                        versionText += `${key}: ${value}\n`;
+                        versionText += `  ${key}: ${value}\n`;
                     }
                 }
-                if (versionsData.docker && versionsData.docker.tag) {
-                    versionText += `DOCKER_TAG: ${versionsData.docker.tag}\n`;
-                }
-                if (versionsData.version_info) {
-                    versionText += `\n發布資訊:\n`;
-                    versionText += `Release Date: ${versionsData.version_info.release_date || 'N/A'}\n`;
-                    versionText += `Release Type: ${versionsData.version_info.release_type || 'N/A'}\n`;
-                    versionText += `Description: ${versionsData.version_info.description || 'N/A'}\n`;
-                }
-                document.getElementById('versionInfo').textContent = versionText || '沒有版本資訊';
+                
+                const finalText = versionText || '沒有版本資訊';
+                document.getElementById('versionInfo').textContent = finalText;
+                addLogMessage(`版本資訊載入成功`, 'success');
             } else {
-                document.getElementById('versionInfo').textContent = `載入版本資訊失敗 (${versionsResponse.status})`;
+                const errorMsg = `載入版本資訊失敗 (${versionsResponse.status})`;
+                document.getElementById('versionInfo').textContent = errorMsg;
+                addLogMessage(errorMsg, 'error');
             }
         } catch (error) {
-            document.getElementById('versionInfo').textContent = '載入版本資訊時發生錯誤';
+            const errorMsg = '載入版本資訊時發生錯誤: ' + error.message;
+            document.getElementById('versionInfo').textContent = errorMsg;
+            addLogMessage(errorMsg, 'error');
         }
         
         // Load configuration
@@ -207,7 +228,13 @@ async function loadBranchInfo(gitConfig, branch) {
 // Show branch information sections
 function showBranchInfo() {
     document.getElementById('contentPlaceholder').style.display = 'none';
-    document.getElementById('tabNav').style.display = 'flex';
+    
+    // Show tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        if (content.id !== 'contentPlaceholder') {
+            content.style.display = 'block';
+        }
+    });
     
     // Enable build button
     document.getElementById('startBuild').disabled = false;
@@ -216,7 +243,13 @@ function showBranchInfo() {
 // Hide branch information sections
 function hideBranchInfo() {
     document.getElementById('contentPlaceholder').style.display = 'block';
-    document.getElementById('tabNav').style.display = 'none';
+    
+    // Hide tab content but keep tabs visible
+    document.querySelectorAll('.tab-content').forEach(content => {
+        if (content.id !== 'contentPlaceholder') {
+            content.style.display = 'none';
+        }
+    });
     
     // Disable build button
     document.getElementById('startBuild').disabled = true;
@@ -244,12 +277,15 @@ function switchTab(tabName) {
     
     document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
     
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    document.getElementById(`${tabName}-content`).classList.add('active');
+    // Update tab content - only show if branch is selected
+    if (currentBranch) {
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        document.getElementById(`${tabName}-content`).classList.add('active');
+        document.getElementById('contentPlaceholder').style.display = 'none';
+    }
 }
 
 // Setup event listeners
